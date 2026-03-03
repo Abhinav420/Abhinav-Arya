@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>I’m Sorry ❤️</title>
+</head>
+<body style="margin:0; font-family: 'Segoe UI', Arial, sans-serif; overflow:hidden;">
+
+  <!-- Animated Gradient Background -->
+  <div id="bg" style="
+    position:fixed; inset:0;
+    background: linear-gradient(120deg, #ffe6e6, #ffd1f3, #e0f7ff, #fff1d6);
+    background-size: 300% 300%;
+    animation: gradientShift 14s ease infinite;
+    z-index:-2;">
+  </div>
+
+  <!-- Soft overlay to make content pop -->
+  <div style="position:fixed; inset:0; background: radial-gradient(ellipse at center, rgba(255,255,255,0.35), rgba(255,255,255,0.1)); z-index:-1;"></div>
+
+  <!-- Falling hearts container -->
+  <div id="hearts" style="position:fixed; inset:0; pointer-events:none;"></div>
+
+  <!-- Card -->
+  <main style="
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <section style="
+      width:min(560px, 92vw);
+      background:#ffffffcc; backdrop-filter: blur(6px);
+      border-radius:24px; box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+      padding: 28px 26px 22px; text-align:center;">
+
+      <div style="font-size:64px; line-height:1; animation: heartbeat 0.9s infinite; color:#ff4d6d;">❤️</div>
+      <h1 style="margin: 10px 0 6px; color:#c21f39; font-weight:800; letter-spacing:0.3px;">
+        I’m really, truly sorry
+      </h1>
+      <p style="margin: 8px auto 14px; color:#333; line-height:1.7; font-size:16.5px; max-width:42ch;">
+        I know I messed up, and I’m sorry for hurting you. You mean the world to me.
+        I’ll do better, I promise. Please forgive me. 💛
+      </p>
+
+      <!-- Controls row -->
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+        <button id="playBtn" style="
+          border:none; background:#ff4d6d; color:white; padding:10px 16px; border-radius:12px;
+          cursor:pointer; font-weight:600; box-shadow:0 6px 16px rgba(255,77,109,0.35);">
+          ▶️ Play music
+        </button>
+        <button id="moreHeartsBtn" style="
+          border:1px solid #ffd0da; background:#fff7f9; color:#c21f39; padding:10px 16px; border-radius:12px;
+          cursor:pointer; font-weight:600;">
+          💗 More hearts
+        </button>
+      </div>
+
+      <p id="hint" style="font-size:12.5px; color:#666; margin-top:8px;">
+        (If the music doesn’t start automatically, tap <b>Play music</b>.)
+      </p>
+    </section>
+  </main>
+
+  <!-- Inline CSS keyframes -->
+  <style>
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translateY(110vh) translateX(var(--drift, 0px)) rotate(360deg); opacity: 0.9; }
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.18); }
+      45% { transform: scale(1); }
+      60% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+  </style>
+
+  <!-- Background music (replace src with your own MP3 link if you like) -->
+  <audio id="bgm" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1f1502da5e.mp3?filename=calm-piano-ambient-110241.mp3" loop preload="auto"></audio>
+
+  <!-- Inline JavaScript -->
+  <script>
+    // --- Music autoplay with graceful fallback ---
+    var audio = document.getElementById('bgm');
+    var playBtn = document.getElementById('playBtn');
+    var hint = document.getElementById('hint');
+
+    // Try to autoplay (may be blocked by browsers)
+    (async function tryAutoPlay(){
+      try {
+        // Many browsers require muted to start; unmute after a brief play on first gesture
+        audio.volume = 0.7;
+        await audio.play();
+        playBtn.textContent = "⏸️ Pause music";
+        hint.textContent = "Music is playing softly in the background.";
+      } catch (e) {
+        // Autoplay blocked – show hint
+        hint.textContent = "Autoplay was blocked. Tap Play to start the music.";
+      }
+    })();
+
+    // Toggle play/pause on button
+    playBtn.addEventListener('click', async function(){
+      try {
+        if (audio.paused) {
+          await audio.play();
+          this.textContent = "⏸️ Pause music";
+          hint.textContent = "Music is playing softly in the background.";
+        } else {
+          audio.pause();
+          this.textContent = "▶️ Play music";
+          hint.textContent = "Music paused.";
+        }
+      } catch (e) {
+        hint.textContent = "Couldn’t start audio. Try tapping again.";
+      }
+    });
+
+    // --- Falling hearts generator ---
+    var heartsLayer = document.getElementById('hearts');
+
+    // Create a single heart element with random props
+    function spawnHeart(extraSlow){
+      var heart = document.createElement('div');
+      var size = Math.floor(Math.random() * 22) + 14; // 14–36px
+      var left = Math.random() * 100; // vw
+      var duration = (Math.random() * 6 + 6) * (extraSlow ? 1.4 : 1); // 6–12s (or slower)
+      var delay = Math.random() * 2;
+
+      // Slight sideways drift
+      var drift = (Math.random() * 120 - 60) + "px";
+
+      // Heart shape using CSS
+      heart.style.cssText = `
+        position: absolute;
+        left: ${left}vw;
+        top: -10vh;
+        width: ${size}px;
+        height: ${size}px;
+        transform-origin: center;
+        --drift: ${drift};
+        animation: fall ${duration}s linear ${delay}s forwards;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.12));
+        pointer-events:none;
+      `;
+
+      // Use a pseudo-heart (two circles + square rotated) via innerHTML
+      heart.innerHTML = `
+        <div style="
+          position:relative; width:100%; height:100%;
+          transform: rotate(-45deg);
+          background: radial-gradient(circle at 30% 30%, #ff7a95, #ff4d6d);
+          border-radius: 8px;">
+          <div style="position:absolute; width:100%; height:100%; top:-50%; left:0;
+            background: radial-gradient(circle at 50% 50%, #ff9db0, #ff4d6d);
+            border-radius:50%;"></div>
+          <div style="position:absolute; width:100%; height:100%; left:50%; top:0;
+            transform: translateX(-50%) translateY(-50%);
+            background: radial-gradient(circle at 50% 50%, #ff9db0, #ff4d6d);
+            border-radius:50%;"></div>
+        </div>
+      `;
+
+      heartsLayer.appendChild(heart);
+
+      // Clean up after animation ends
+      heart.addEventListener('animationend', function(){ heart.remove(); });
+    }
+
+    // Baseline hearts frequency
+    var baseInterval = setInterval(function(){ spawnHeart(false); }, 450);
+
+    // Button to trigger extra hearts burst
+    document.getElementById('moreHeartsBtn').addEventListener('click', function(){
+      for (var i = 0; i < 16; i++) {
+        setTimeout(function(){ spawnHeart(true); }, i * 90);
+      }
+    });
+
+    // Also spawn a few at load for immediate effect
+    for (var j = 0; j < 12; j++) {
+      setTimeout(function(){ spawnHeart(false); }, j * 120);
+    }
+
+    // Accessibility: Space/Enter to toggle music when button focused
+    playBtn.addEventListener('keydown', function(e){
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.click(); }
+    });
+  </script>
+</body>
+</html>
